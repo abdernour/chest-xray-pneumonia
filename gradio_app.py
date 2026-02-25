@@ -66,17 +66,17 @@ class PneumoniaDetector:
             
             # format diagnosis text
             if predicted_class == 1:
-                diagnosis = f"pneumonia detected\n\n"
-                diagnosis += f"confidence: {pneumonia_prob*100:.1f}%\n\n"
-                diagnosis += f"this x-ray shows signs of pneumonia.\n"
-                diagnosis += f"recommendation: consult a qualified medical professional immediately.\n\n"
-                diagnosis += f"note: this is an ai screening tool, not a replacement for professional diagnosis."
+                diagnosis = f"## 🔴 result: pneumonia detected\n\n"
+                diagnosis += f"**confidence:** {pneumonia_prob*100:.2f}%\n\n"
+                diagnosis += f"--- \n"
+                diagnosis += f"**details:** clinical signs of pneumonia were identified in this x-ray.\n\n"
+                diagnosis += f"**recommendation:** professional medical consultation is required.\n"
             else:
-                diagnosis = f"normal x-ray\n\n"
-                diagnosis += f"confidence: {normal_prob*100:.1f}%\n\n"
-                diagnosis += f"no signs of pneumonia detected.\n"
-                diagnosis += f"this x-ray appears normal based on ai analysis.\n\n"
-                diagnosis += f"note: ai screening should be verified by a healthcare professional."
+                diagnosis = f"## 🟢 result: normal x-ray\n\n"
+                diagnosis += f"**confidence:** {normal_prob*100:.2f}%\n\n"
+                diagnosis += f"--- \n"
+                diagnosis += f"**details:** no significant indicators of pneumonia detected.\n\n"
+                diagnosis += f"**recommendation:** maintain regular checkups.\n"
             
             # confidence scores for the label output
             confidence_dict = {
