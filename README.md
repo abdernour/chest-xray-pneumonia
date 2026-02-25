@@ -55,7 +55,7 @@ training curves, confusion matrix, and roc curve are saved in the `results/` dir
 pneumonia_cnn.py         - cnn model, dataset loader, preprocessing
 train_pneumonia.py       - training loop, evaluation, visualization
 pneumonia_example.py     - full training pipeline (entry point)
-test_pneumonia.py        - prediction on new x-rays
+gradio_app.py            - interactive web application demo
 requirements.txt         - python dependencies
 results/                 - training output plots
 ```
@@ -79,6 +79,9 @@ python test_pneumonia.py
 
 # predict on a single x-ray
 python test_pneumonia.py path/to/xray.jpg
+
+# launch interactive web app
+python gradio_app.py
 ```
 
 ## requirements
