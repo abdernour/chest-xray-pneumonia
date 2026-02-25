@@ -184,6 +184,14 @@ with gr.Blocks(css=custom_css, title="pneumonia detection ai") as demo:
         - medical image preprocessing (clahe enhancement)
         - class-weighted training
         
+        **important notice:**
+        this tool is for educational purposes only and should not be used as a substitute for professional medical diagnosis. always consult with a healthcare provider for any health concerns.
+        """
+    )
+    
+    gr.Markdown(
+        """
+        ---
         built with ❤️ using pytorch and gradio
         """
     )
