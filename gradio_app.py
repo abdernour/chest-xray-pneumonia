@@ -114,7 +114,10 @@ def predict_pneumonia(image):
 
 
 # examples
-examples = []
+examples = [
+    ["archive/chest_xray/test/NORMAL/IM-0001-0001.jpeg"],
+    ["archive/chest_xray/test/PNEUMONIA/person100_bacteria_475.jpeg"]
+]
 
 
 # custom css for styling
