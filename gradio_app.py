@@ -90,58 +90,132 @@ detector = PneumoniaDetectorWithGradCAM()
 def analyze_xray(image, show_heatmap):
     return detector.predict_with_gradcam(image, show_heatmap)
 
-# Midnight Minimal with subtle rounding
+# Midnight Minimal with cleaner, faster layout
 custom_css = """
-@import url('https://fonts.googleapis.com/css2?family=outfit:wght@300;400;600&family=inter:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Inter:wght@300;400;500&display=swap');
 
 .gradio-container {
-    background-color: #0c0c0e !important;
-    font-family: 'inter', sans-serif;
+    background-color: #050509 !important;
+    font-family: 'Inter', sans-serif;
+    padding: 2.5rem 0 !important;
+}
+
+.gr-blocks {
+    max-width: 1120px;
+    margin: 0 auto !important;
 }
 
 .main-header {
     text-align: center;
-    padding: 2.5rem 0;
-    font-family: 'outfit', sans-serif;
+    padding: 1.5rem 0 0.5rem 0;
+    font-family: 'Outfit', sans-serif;
     background: linear-gradient(to right, #ffffff, #a1a1aa);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     font-weight: 600;
     letter-spacing: -0.03em;
-    font-size: 2.5rem;
+    font-size: 2.6rem;
+}
+
+.subtitle {
+    text-align: center;
+    color: #a1a1a6;
+    margin-top: 0.4rem;
+    margin-bottom: 1.4rem;
+    font-size: 0.98rem;
+}
+
+.metrics-row {
+    display: flex;
+    justify-content: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+    margin-top: 0.8rem;
+}
+
+.metric-pill {
+    background: linear-gradient(135deg, #111827, #020617);
+    border-radius: 4px;
+    padding: 0.55rem 1rem;
+    border: 1px solid rgba(148, 163, 184, 0.55);
+    display: flex;
+    flex-direction: column;
+    min-width: 110px;
+}
+
+.metric-label {
+    color: #9ca3af;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.metric-value {
+    color: #e5e7eb;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
 }
 
 .minimal-card {
-    background: #141416;
+    background: #050816;
     border: 1px solid #232326;
-    border-radius: 12px;
-    padding: 30px;
-    margin-bottom: 24px;
-    transition: all 0.3s ease;
+    border-radius: 6px;
+    padding: 28px 28px 26px 28px;
+    margin-bottom: 20px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .minimal-card:hover {
-    border-color: #3b82f6;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    border-color: #71717a;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.7);
 }
 
-.gr-button-primary {
+.gr-row {
+    gap: 1.75rem !important;
+    align-items: start;
+}
+
+.gr-button-primary, button.primary {
     background: #ffffff !important;
     border: none !important;
-    border-radius: 8px !important;
-    color: #000000 !important;
+    border-radius: 4px !important;
+    color: #020617 !important;
     font-weight: 600 !important;
-    padding: 12px 24px !important;
-    transition: all 0.3s ease !important;
+    padding: 12px 26px !important;
+    transition: box-shadow 0.15s ease, opacity 0.15s ease !important;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.55);
 }
 
-.gr-button-primary:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
+.gr-button-primary:hover,
+button.primary:hover {
+    opacity: 0.96;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.75);
 }
 
 .result-stripe {
-    border-top: 2px solid #3b82f6;
+    border-top: 2px solid #52525b;
+    border-radius: 6px;
+}
+
+/* Emphasize the diagnosis result as the main answer */
+#diagnosis-result {
+    border-left: 3px solid #71717a;
+    padding-left: 1rem;
+}
+
+.result-stripe .gr-label {
+    font-size: 0.8rem;
+    color: #a1a1a6 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.35rem;
+}
+
+.notice-text {
+    color: #71717a !important;
+    font-size: 0.85rem;
+    margin-top: 1rem;
 }
 
 footer {
@@ -153,15 +227,24 @@ h1, h2, h3, p, label, .gr-form span, .gr-markdown, .gr-label {
 }
 
 .gr-image, .gr-file {
-    background: #1a1a1c !important;
+    background: #020617 !important;
     border: 1px solid #232326 !important;
-    border-radius: 8px !important;
+    border-radius: 6px !important;
+}
+
+.gr-image img {
+    object-fit: contain;
+    border-radius: 4px;
 }
 
 .info-text {
-    color: #a1a1a6 !important;
-    font-size: 0.95rem;
-    line-height: 1.6;
+    color: #9ca3af !important;
+    font-size: 0.94rem;
+    line-height: 1.7;
+}
+
+.gr-checkbox, .gr-checkbox label {
+    color: #e5e5e7 !important;
 }
 """
 
@@ -171,15 +254,22 @@ with gr.Blocks(css=custom_css, title="Pneumonia Detection") as demo:
         gr.Markdown(
             """
             <div class="main-header">Pneumonia Detection System</div>
-            
-            #### Automated Chest X-Ray Analysis & Visualization
-            
-            Identify patterns associated with pneumonia and visualize model attention regions.
-            
-            **System Metrics:**
-            - **Accuracy:** 88.5% 
-            - **Sensitivity:** 93.6% 
-            - **ROC-AUC:** 0.95
+            <p class="subtitle">Automated chest X-ray triage with Grad-CAM explainability.</p>
+
+            <div class="metrics-row">
+                <div class="metric-pill">
+                    <span class="metric-label">Accuracy</span>
+                    <span class="metric-value">88.5%</span>
+                </div>
+                <div class="metric-pill">
+                    <span class="metric-label">Sensitivity</span>
+                    <span class="metric-value">93.6%</span>
+                </div>
+                <div class="metric-pill">
+                    <span class="metric-label">ROC-AUC</span>
+                    <span class="metric-value">0.95</span>
+                </div>
+            </div>
             """
         )
     
@@ -206,12 +296,12 @@ with gr.Blocks(css=custom_css, title="Pneumonia Detection") as demo:
                 - Blue Zones: Low importance regions (likely healthy)
                 </div>
                 
-                **Notice:** This is an educational tool. Always consult a medical professional.
+                <span class="notice-text">Notice: This is an educational tool. Always consult a medical professional.</span>
                 """
             )
         
         with gr.Column(elem_classes="minimal-card result-stripe"):
-            diagnosis_output = gr.Markdown(label="Diagnosis Result")
+            diagnosis_output = gr.Markdown(label="Diagnosis Result", elem_id="diagnosis-result")
             confidence_output = gr.Label(label="Confidence Levels", num_top_classes=2)
             heatmap_output = gr.Image(label="Focus Map (Grad-CAM)", type="numpy")
     
