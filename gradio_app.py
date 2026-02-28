@@ -118,14 +118,55 @@ def analyze_xray(image, show_heatmap):
     return detector.predict_with_gradcam(image, show_heatmap)
 
 
-# custom css
+# custom css for premium aesthetic
 custom_css = """
+@import url('https://fonts.googleapis.com/css2?family=outfit:wght@300;400;600&family=inter:wght@300;400;500&display=swap');
+
 .gradio-container {
-    font-family: 'arial', sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    font-family: 'inter', sans-serif;
+    color: #2d3436;
 }
+
+.main-header {
+    text-align: center;
+    padding: 2rem 0;
+    font-family: 'outfit', sans-serif;
+    background: linear-gradient(to right, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
 .gr-button-primary {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border: none;
+    border-radius: 12px;
+    color: white;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.gr-button-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+.result-card {
+    border-left: 5px solid #667eea;
+}
+
+h1, h2, h3 {
+    font-family: 'outfit', sans-serif;
 }
 """
 
@@ -133,50 +174,53 @@ custom_css = """
 # build interface
 with gr.Blocks(css=custom_css, title="pneumonia detection ai") as demo:
     
-    gr.Markdown(
-        """
-        # pneumonia detection ai
-        
-        ### chest x-ray analysis with explainable ai (grad-cam)
-        
-        upload a chest x-ray to detect pneumonia and see **where** the ai is looking.
-        
-        **model stats:**
-        - 88.5% test accuracy
-        - 93.6% sensitivity
-        - 0.95 roc-auc score
-        """
-    )
+    with gr.Column(elem_classes="glass-card"):
+        gr.Markdown(
+            """
+            # <div class="main-header">pneumonia detection ai</div>
+            
+            ### ✨ chest x-ray analysis with explainable ai (grad-cam)
+            
+            upload a chest x-ray to detect pneumonia and visualize the ai attention zones.
+            
+            **model precision:**
+            - **accuracy:** 88.5% 
+            - **sensitivity:** 93.6% 
+            - **roc-auc:** 0.95
+            """,
+            elem_id="header-text"
+        )
     
     with gr.Row():
-        with gr.Column():
+        with gr.Column(elem_classes="glass-card"):
             input_image = gr.Image(
                 label="upload chest x-ray",
                 type="pil",
                 sources=["upload", "webcam"],
             )
             
-            show_heatmap_checkbox = gr.Checkbox(
-                label="show grad-cam heatmap",
-                value=True
-            )
+            with gr.Row():
+                show_heatmap_checkbox = gr.Checkbox(
+                    label="enable grad-cam visualization",
+                    value=True
+                )
             
-            analyze_btn = gr.Button("analyze x-ray", variant="primary", size="lg")
+            analyze_btn = gr.Button("🚀 analyze x-ray", variant="primary", size="lg")
             
             gr.Markdown(
                 """
-                ### interpretation guide:
-                - **red/yellow**: high ai attention (potential infection)
-                - **blue/green**: low ai attention (likely healthy)
+                ### 💡 interpretation guide:
+                - **red zones**: high ai focus (potential infection)
+                - **blue zones**: low ai focus (likely healthy)
                 
-                **important notice:** educational tool only. always consult healthcare professionals.
+                **⚕️ notice:** educational tool only. consult professionals.
                 """
             )
         
-        with gr.Column():
+        with gr.Column(elem_classes="glass-card result-card"):
             diagnosis_output = gr.Markdown(label="diagnosis result")
-            confidence_output = gr.Label(label="confidence scores", num_top_classes=2)
-            heatmap_output = gr.Image(label="grad-cam heatmap", type="numpy")
+            confidence_output = gr.Label(label="confidence levels", num_top_classes=2)
+            heatmap_output = gr.Image(label="grad-cam focus map", type="numpy")
     
     gr.Markdown(
         """
