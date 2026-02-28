@@ -222,21 +222,24 @@ with gr.Blocks(css=custom_css, title="pneumonia detection ai") as demo:
             confidence_output = gr.Label(label="confidence levels", num_top_classes=2)
             heatmap_output = gr.Image(label="grad-cam focus map", type="numpy")
     
-    gr.Markdown(
-        """
-        ### about this model
-        
-        this ai model was trained on 5,200+ chest x-ray images to classify normal vs pneumonia. it uses **grad-cam** to provide transparency by highlighting the regions of interest in the image.
-        
-        **technology stack:**
-        - pytorch cnn (4.8m parameters)
-        - medical image preprocessing (clahe)
-        - explainable ai (grad-cam)
-        
-        ---
-        built using pytorch and gradio
-        """
-    )
+    with gr.Column(elem_classes="glass-card"):
+        gr.Markdown(
+            """
+            ### 🔬 about this model
+            
+            this ai model was trained on **5,200+ medical images** to accurately classify normal vs pneumonia. it utilizes **grad-cam** (gradient-weighted class activation mapping) to provide transparency in its decision-making process.
+            
+            **🛠️ technology stack:**
+            - **pytorch cnn**: optimized convolutional architecture
+            - **medical vision**: clahe & bilateral noise reduction
+            - **interpretability**: real-time grad-cam heatmap generation
+            
+            ---
+            <div style="text-align: center; color: #636e72; font-size: 0.9rem;">
+                built with ❤️ for medical ai transparency • powered by pytorch & gradio
+            </div>
+            """
+        )
     
     analyze_btn.click(
         fn=analyze_xray,
