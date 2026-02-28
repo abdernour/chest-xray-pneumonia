@@ -11,42 +11,32 @@ from gradcam import GradCAM
 
 
 class PneumoniaDetectorWithGradCAM:
-    """enhanced detector with grad-cam visualization"""
+    """Enhanced detector with Grad-CAM visualization"""
     
     def __init__(self, model_path='pneumonia_checkpoints/best_model.pth'):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.class_names = ['normal', 'pneumonia']
+        self.class_names = ['Normal', 'Pneumonia']
         
-        # load model
         self.model = PneumoniaCNN(dropout=0.3)
         if os.path.exists(model_path):
             checkpoint = torch.load(model_path, map_location=self.device, weights_only=False)
             self.model.load_state_dict(checkpoint['model_state_dict'])
-            print(f"model loaded from {model_path}")
-        else:
-            print(f"model not found - using untrained model for demo")
         
-        self.model.to(self.device)
-        self.model.eval()
-        
-        # setup grad-cam (target conv4)
+        self.model.to(self.device).eval()
         self.gradcam = GradCAM(self.model, self.model.conv4[-2])
-        
-        # preprocessing
         self.transform = MedicalDataAugmentation.get_val_transforms()
         self.preprocessor = MedicalImagePreprocessor()
     
     def preprocess_xray_array(self, image_array):
-        """helper for array preprocessing"""
+        """Helper for array preprocessing"""
         image = self.preprocessor.normalize_intensity(image_array)
         image = self.preprocessor.enhance_contrast(image)
         image = self.preprocessor.remove_noise(image)
         return image
     
     def predict_with_gradcam(self, image, show_heatmap=True):
-        """predict with grad-cam visualization"""
+        """Predict with Grad-CAM visualization"""
         try:
-            # convert to grayscale array
             if isinstance(image, np.ndarray):
                 if len(image.shape) == 3 and image.shape[2] == 3:
                     image_gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
@@ -55,14 +45,10 @@ class PneumoniaDetectorWithGradCAM:
             else:
                 image_gray = np.array(image.convert('L'))
             
-            # preprocess
             preprocessed = self.preprocess_xray_array(image_gray)
             preprocessed_pil = Image.fromarray(preprocessed)
-            
-            # transform for model
             image_tensor = self.transform(preprocessed_pil).unsqueeze(0).to(self.device)
             
-            # predict
             with torch.no_grad():
                 outputs = self.model(image_tensor)
                 probabilities = F.softmax(outputs, dim=1)
@@ -71,172 +57,180 @@ class PneumoniaDetectorWithGradCAM:
             pneumonia_prob = probabilities[0][1].item()
             predicted_class = 1 if pneumonia_prob > normal_prob else 0
             
-            # generate grad-cam
             if show_heatmap:
                 cam = self.gradcam.generate_cam(image_tensor, target_class=predicted_class)
                 overlay = self.gradcam.overlay_heatmap(image_gray, cam, alpha=0.4)
             else:
                 overlay = image_gray
             
-            # format diagnosis
             if predicted_class == 1:
-                diagnosis = f"## 🔴 result: pneumonia detected\n\n"
-                diagnosis += f"**confidence:** {pneumonia_prob*100:.2f}%\n\n"
+                diagnosis = f"## Result: Pneumonia Detected\n\n"
+                diagnosis += f"**Confidence:** {pneumonia_prob*100:.2f}%\n\n"
                 diagnosis += f"--- \n"
-                diagnosis += f"**ai analysis:** red areas show where the ai detected signs of pneumonia.\n\n"
-                diagnosis += f"**recommendation:** professional medical consultation is required.\n\n"
-                diagnosis += f"_heatmap shows the lung regions that influenced the decision._"
+                diagnosis += f"**Analysis:** The heatmap highlights regions with clinical signs of pneumonia.\n\n"
+                diagnosis += f"**Recommendation:** Professional medical consultation is required.\n\n"
+                diagnosis += f"_Visualization shows lung areas that influenced the model decision._"
             else:
-                diagnosis = f"## 🟢 result: normal x-ray\n\n"
-                diagnosis += f"**confidence:** {normal_prob*100:.2f}%\n\n"
+                diagnosis = f"## Result: Normal X-Ray\n\n"
+                diagnosis += f"**Confidence:** {normal_prob*100:.2f}%\n\n"
                 diagnosis += f"--- \n"
-                diagnosis += f"**ai analysis:** no significant indicators of pneumonia detected.\n\n"
-                diagnosis += f"**recommendation:** maintain regular checkups.\n\n"
-                diagnosis += f"_the heatmap shows normal attention patterns across the lungs._"
+                diagnosis += f"**Analysis:** No significant indicators of pneumonia detected.\n\n"
+                diagnosis += f"**Recommendation:** Maintain regular checkups.\n\n"
+                diagnosis += f"_The heatmap shows normal attention patterns across the lungs._"
             
-            confidence_dict = {
-                "normal": float(normal_prob),
-                "pneumonia": float(pneumonia_prob)
-            }
-            
+            confidence_dict = {"Normal": float(normal_prob), "Pneumonia": float(pneumonia_prob)}
             return diagnosis, confidence_dict, overlay
             
         except Exception as e:
-            error_msg = f"## ⚠️ error during analysis\n\n"
-            error_msg += f"**details:** {str(e)}\n\n"
-            error_msg += f"please ensure the image is a valid chest x-ray."
-            return error_msg, {"error": 1.0}, None
+            error_msg = f"## Error during analysis\n\n**Details:** {str(e)}\n\nEnsure the image is a valid chest X-ray."
+            return error_msg, {"Error": 1.0}, None
 
-
-# initialize detector
 detector = PneumoniaDetectorWithGradCAM()
 
-
-# interface callback
 def analyze_xray(image, show_heatmap):
-    """gradio callback"""
     return detector.predict_with_gradcam(image, show_heatmap)
 
-
-# custom css for premium aesthetic
+# Midnight Minimal with subtle rounding
 custom_css = """
 @import url('https://fonts.googleapis.com/css2?family=outfit:wght@300;400;600&family=inter:wght@300;400;500&display=swap');
 
 .gradio-container {
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background-color: #0c0c0e !important;
     font-family: 'inter', sans-serif;
-    color: #2d3436;
 }
 
 .main-header {
     text-align: center;
-    padding: 2rem 0;
+    padding: 2.5rem 0;
     font-family: 'outfit', sans-serif;
-    background: linear-gradient(to right, #667eea, #764ba2);
+    background: linear-gradient(to right, #ffffff, #a1a1aa);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-}
-
-.glass-card {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-    padding: 20px;
-    margin-bottom: 20px;
-}
-
-.gr-button-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
-    border-radius: 12px;
-    color: white;
     font-weight: 600;
+    letter-spacing: -0.03em;
+    font-size: 2.5rem;
+}
+
+.minimal-card {
+    background: #141416;
+    border: 1px solid #232326;
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 24px;
     transition: all 0.3s ease;
 }
 
+.minimal-card:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.gr-button-primary {
+    background: #ffffff !important;
+    border: none !important;
+    border-radius: 8px !important;
+    color: #000000 !important;
+    font-weight: 600 !important;
+    padding: 12px 24px !important;
+    transition: all 0.3s ease !important;
+}
+
 .gr-button-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    opacity: 0.9;
+    transform: translateY(-1px);
 }
 
-.result-card {
-    border-left: 5px solid #667eea;
+.result-stripe {
+    border-top: 2px solid #3b82f6;
 }
 
-h1, h2, h3 {
-    font-family: 'outfit', sans-serif;
+footer {
+    display: none !important;
+}
+
+h1, h2, h3, p, label, .gr-form span, .gr-markdown, .gr-label {
+    color: #e5e5e7 !important;
+}
+
+.gr-image, .gr-file {
+    background: #1a1a1c !important;
+    border: 1px solid #232326 !important;
+    border-radius: 8px !important;
+}
+
+.info-text {
+    color: #a1a1a6 !important;
+    font-size: 0.95rem;
+    line-height: 1.6;
 }
 """
 
-
-# build interface
-with gr.Blocks(css=custom_css, title="pneumonia detection ai") as demo:
+with gr.Blocks(css=custom_css, title="Pneumonia Detection") as demo:
     
-    with gr.Column(elem_classes="glass-card"):
+    with gr.Column(elem_classes="minimal-card"):
         gr.Markdown(
             """
-            # <div class="main-header">pneumonia detection ai</div>
+            <div class="main-header">Pneumonia Detection System</div>
             
-            ### ✨ chest x-ray analysis with explainable ai (grad-cam)
+            #### Automated Chest X-Ray Analysis & Visualization
             
-            upload a chest x-ray to detect pneumonia and visualize the ai attention zones.
+            Identify patterns associated with pneumonia and visualize model attention regions.
             
-            **model precision:**
-            - **accuracy:** 88.5% 
-            - **sensitivity:** 93.6% 
-            - **roc-auc:** 0.95
-            """,
-            elem_id="header-text"
+            **System Metrics:**
+            - **Accuracy:** 88.5% 
+            - **Sensitivity:** 93.6% 
+            - **ROC-AUC:** 0.95
+            """
         )
     
     with gr.Row():
-        with gr.Column(elem_classes="glass-card"):
+        with gr.Column(elem_classes="minimal-card"):
             input_image = gr.Image(
-                label="upload chest x-ray",
+                label="Upload Chest X-Ray",
                 type="pil",
                 sources=["upload", "webcam"],
             )
             
-            with gr.Row():
-                show_heatmap_checkbox = gr.Checkbox(
-                    label="enable grad-cam visualization",
-                    value=True
-                )
+            show_heatmap_checkbox = gr.Checkbox(
+                label="Enable Heatmap Visualization",
+                value=True
+            )
             
-            analyze_btn = gr.Button("🚀 analyze x-ray", variant="primary", size="lg")
+            analyze_btn = gr.Button("Analyze X-Ray", variant="primary", size="lg")
             
             gr.Markdown(
                 """
-                ### 💡 interpretation guide:
-                - **red zones**: high ai focus (potential infection)
-                - **blue zones**: low ai focus (likely healthy)
+                ### Visualization Guide
+                <div class="info-text">
+                - Red Zones: High importance regions (potential indicators)<br>
+                - Blue Zones: Low importance regions (likely healthy)
+                </div>
                 
-                **⚕️ notice:** educational tool only. consult professionals.
+                **Notice:** This is an educational tool. Always consult a medical professional.
                 """
             )
         
-        with gr.Column(elem_classes="glass-card result-card"):
-            diagnosis_output = gr.Markdown(label="diagnosis result")
-            confidence_output = gr.Label(label="confidence levels", num_top_classes=2)
-            heatmap_output = gr.Image(label="grad-cam focus map", type="numpy")
+        with gr.Column(elem_classes="minimal-card result-stripe"):
+            diagnosis_output = gr.Markdown(label="Diagnosis Result")
+            confidence_output = gr.Label(label="Confidence Levels", num_top_classes=2)
+            heatmap_output = gr.Image(label="Focus Map (Grad-CAM)", type="numpy")
     
-    with gr.Column(elem_classes="glass-card"):
+    with gr.Column(elem_classes="minimal-card"):
         gr.Markdown(
             """
-            ### 🔬 about this model
+            ### Technical Overview
+            <div class="info-text">
+            This module was developed using over 5,000 medical images to classify Normal vs Pneumonia scans. It utilizes Grad-CAM (Gradient-weighted Class Activation Mapping) to highlight the specific lung regions that influenced the internal decision process.
+            </div>
             
-            this ai model was trained on **5,200+ medical images** to accurately classify normal vs pneumonia. it utilizes **grad-cam** (gradient-weighted class activation mapping) to provide transparency in its decision-making process.
-            
-            **🛠️ technology stack:**
-            - **pytorch cnn**: optimized convolutional architecture
-            - **medical vision**: clahe & bilateral noise reduction
-            - **interpretability**: real-time grad-cam heatmap generation
+            **Implementation Details:**
+            - **Convolutional Network:** Optimized binary classification architecture
+            - **Medical Vision:** CLAHE contrast enhancement & bilateral filtering
+            - **Interpretability:** Real-time heatmaps for local evidence detection
             
             ---
-            <div style="text-align: center; color: #636e72; font-size: 0.9rem;">
-                built with ❤️ for medical ai transparency • powered by pytorch & gradio
+            <div style="text-align: center; color: #71717a; font-size: 0.85rem;">
+                Built for medical transparency • Powered by PyTorch & Gradio
             </div>
             """
         )
@@ -253,8 +247,6 @@ with gr.Blocks(css=custom_css, title="pneumonia detection ai") as demo:
         outputs=[diagnosis_output, confidence_output, heatmap_output]
     )
 
-
-# launch
 if __name__ == "__main__":
     demo.launch(
         share=False,
