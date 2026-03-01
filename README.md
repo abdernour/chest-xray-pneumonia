@@ -2,6 +2,10 @@
 
 binary classification cnn that detects pneumonia from chest x-ray images (normal vs pneumonia). trained on the kaggle chest x-ray dataset using pytorch.
 
+## preview
+
+![pneumonia detection app](assets/scr.png)
+
 ## dataset
 
 - source: [kaggle chest x-ray images (pneumonia)](https://www.kaggle.com/datasets/paultimothymooney/chest-xray-pneumonia)
