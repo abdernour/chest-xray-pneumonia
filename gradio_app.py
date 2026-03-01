@@ -5,6 +5,7 @@ from PIL import Image
 import numpy as np
 import cv2
 import os
+from typing import Any, Dict, Tuple, Optional
 
 from pneumonia_cnn import PneumoniaCNN, MedicalDataAugmentation, MedicalImagePreprocessor
 from gradcam import GradCAM
@@ -87,8 +88,31 @@ class PneumoniaDetectorWithGradCAM:
 
 detector = PneumoniaDetectorWithGradCAM()
 
-def analyze_xray(image, show_heatmap):
+def analyze_xray(image: Any, show_heatmap: bool) -> Tuple[str, Dict[str, float], Optional[np.ndarray]]:
+    """
+    Run a single chest X-ray through the detector.
+    Used as the callable for the Gradio interface.
+    """
     return detector.predict_with_gradcam(image, show_heatmap)
+
+def load_sample_xray(show_heatmap: bool) -> Tuple[Optional[Image.Image], str, Dict[str, float], Optional[np.ndarray]]:
+    """
+    Load a bundled sample chest X-ray and run the full pipeline.
+    Expects an image file at assets/sample_xray.jpg.
+    """
+    sample_path = os.path.join("assets", "sample_xray.jpg")
+    
+    if not os.path.exists(sample_path):
+        diagnosis = (
+            "## Sample image not found\n\n"
+            "Place a chest X-ray at `assets/sample_xray.jpg` and reload the app."
+        )
+        # Clear image/heatmap but still return a valid structure
+        return None, diagnosis, {"Normal": 0.0, "Pneumonia": 0.0}, None
+    
+    image = Image.open(sample_path).convert("RGB")
+    diagnosis, confidence_dict, overlay = detector.predict_with_gradcam(image, show_heatmap)
+    return image, diagnosis, confidence_dict, overlay
 
 # Midnight Minimal with cleaner, faster layout
 custom_css = """
@@ -286,7 +310,9 @@ with gr.Blocks(css=custom_css, title="Pneumonia Detection") as demo:
                 value=True
             )
             
-            analyze_btn = gr.Button("Analyze X-Ray", variant="primary", size="lg")
+            with gr.Row():
+                sample_btn = gr.Button("Use Sample X-Ray", variant="secondary")
+                analyze_btn = gr.Button("Analyze X-Ray", variant="primary", size="lg")
             
             gr.Markdown(
                 """
@@ -335,6 +361,12 @@ with gr.Blocks(css=custom_css, title="Pneumonia Detection") as demo:
         fn=analyze_xray,
         inputs=[input_image, show_heatmap_checkbox],
         outputs=[diagnosis_output, confidence_output, heatmap_output]
+    )
+    
+    sample_btn.click(
+        fn=load_sample_xray,
+        inputs=[show_heatmap_checkbox],
+        outputs=[input_image, diagnosis_output, confidence_output, heatmap_output]
     )
 
 if __name__ == "__main__":
